@@ -4,9 +4,9 @@ The header, footer and the sticky mobile call bar now live in one place each:
 
 | File | What it is | Logo it uses |
 |---|---|---|
-| `partials/header.html` | top bar: logo, menu, Call + Book site visit | `/brand/adarsh-logo-blue.png` at 180px wide |
+| `partials/header.html` | blue top bar: logo, menu, Call + Book site visit | `/brand/adarsh-logo-white.png` at 172px wide |
 | `partials/footer.html` | dark footer: logo, links, RERA line, disclaimer | `/brand/adarsh-logo.png` at 220px wide |
-| `partials/sticky-cta.html` | Call / WhatsApp / Site visit bar on phones | — |
+| `partials/sticky-cta.html` | Call / WhatsApp / Site visit bar on phones, plus the desktop side dock | — |
 
 Each page carries the stamped copy between marker comments:
 
@@ -43,3 +43,10 @@ section bar moved from `top-16` to `top-20` to match.
 
 Small white logos also appear on the home hero and project heroes; they use
 `/brand/adarsh-logo.png`.
+
+## Brand styling
+
+The look follows the Adarsh brand used on adarshwelkinpark.online: brochure blue `#004788`,
+coral `#F4836F`, Playfair Display headings over Inter. The Tailwind theme tokens at the top of
+`assets/css/style.css` carry these colours, and the "Adarsh brand layer" block at the end of the
+same file styles the header, footer, buttons, cards, tables and the mobile bar.

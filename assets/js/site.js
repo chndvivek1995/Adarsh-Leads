@@ -398,3 +398,16 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();
 })();
+
+/* Brand header: mark the current section in the menu and shade the bar on scroll. */
+(function () {
+  var p = location.pathname;
+  document.querySelectorAll('.hdr-nav a, .hdr-sub a').forEach(function (a) {
+    var h = a.getAttribute('href');
+    if (h !== '/' && p.indexOf(h) === 0) a.setAttribute('aria-current', 'page');
+  });
+  var hdr = document.querySelector('.hdr');
+  if (!hdr) return;
+  var on = function () { hdr.classList.toggle('is-scrolled', scrollY > 8); };
+  addEventListener('scroll', on, { passive: true }); on();
+})();
