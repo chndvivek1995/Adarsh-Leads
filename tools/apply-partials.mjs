@@ -3,6 +3,7 @@
 // Run from the site folder:  node tools/apply-partials.mjs
 import fs from "node:fs";
 import path from "node:path";
+import crypto from "node:crypto";
 
 const ROOT = path.dirname(path.dirname(new URL(import.meta.url).pathname));
 const PARTS = [
@@ -23,10 +24,18 @@ function walk(dir, out = []) {
 const parts = PARTS.filter(([, p]) => fs.existsSync(path.join(ROOT, p)))
   .map(([name, p, finder]) => [name, fs.readFileSync(path.join(ROOT, p), "utf8").trim(), finder]);
 
+// style.css and site.js are cached for a year (vercel.json), so every page links them
+// with ?v=<content hash>. A changed file gets a new hash and browsers fetch it again.
+const versions = ["assets/css/style.css", "assets/js/site.js"].map((a) => {
+  const h = crypto.createHash("sha1").update(fs.readFileSync(path.join(ROOT, a))).digest("hex").slice(0, 10);
+  return [new RegExp(`/${a.replace(/[.]/g, "\\.")}(?:\\?v=[0-9a-f]+)?"`, "g"), `/${a}?v=${h}"`];
+});
+
 let changed = 0;
 for (const f of walk(ROOT).sort()) {
   const src = fs.readFileSync(f, "utf8");
   let out = src;
+  for (const [pat, repl] of versions) out = out.replace(pat, repl);
   for (const [name, content, finder] of parts) {
     const block = `<!-- ${name}:START -->${content}<!-- ${name}:END -->`;
     const marker = new RegExp(`<!-- ${name}:START -->[\\s\\S]*?<!-- ${name}:END -->`);

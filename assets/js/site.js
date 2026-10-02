@@ -16,9 +16,14 @@
     // "popup" = MSG91's own verification window (handles captcha itself — recommended)
     // "inline" = OTP box inside our form (needs captcha OFF on the widget)
     MSG91_MODE: "popup",
-    // Optional: Google Tag Manager and Microsoft Clarity IDs
-    GTM_ID: "",
-    CLARITY_ID: "",
+    // OTP check on lead forms. false = forms submit straight away (owner choice, Oct 2026).
+    OTP: false,
+    // Analytics — each tag loads only when its ID is filled in (see SEO-FIXES-TODO.md).
+    // Use GTM_ID *or* GA4_ID, not both, or GA4 page views will double count.
+    GTM_ID: "",        // e.g. "GTM-XXXXXXX"
+    GA4_ID: "",        // e.g. "G-XXXXXXXXXX"
+    META_PIXEL_ID: "", // e.g. "123456789012345"
+    CLARITY_ID: "",    // e.g. "abcd123xyz"
   };
 
   var $ = function (sel, root) { return (root || document).querySelector(sel); };
@@ -96,7 +101,7 @@
     otpReady.catch(function () { otpReady = null; });
     return otpReady;
   }
-  function otpEnabled() { return !!(CONFIG.MSG91_WIDGET_ID && CONFIG.MSG91_TOKEN_AUTH); }
+  function otpEnabled() { return !!(CONFIG.OTP && CONFIG.MSG91_WIDGET_ID && CONFIG.MSG91_TOKEN_AUTH); }
   var captchaHome = null; // the form that holds the captcha
   function captchaBox(form) {
     var cap = document.getElementById("msg91-captcha");
@@ -256,7 +261,7 @@
           (CONFIG.MSG91_MODE === "popup" ? runOtpPopup(phone, setNote) : runOtp(form, phone, setNote)).then(function (t) { setNote(""); send(t); }).catch(function (e) {
             setNote("");
             btn.disabled = false;
-            btn.textContent = "Verify mobile & continue";
+            btn.textContent = "Book free site visit";
             showErr("We could not send the OTP: " + ((e && e.message) || "unknown error") + " — or call us.");
           });
         } else {
@@ -265,6 +270,7 @@
 
         function submit() {
         var done = function () {
+          track("lead_form_submit", "LeadFormSubmit", { project: project, intent: lead.intent });
           if (form.dataset.brochure) window.open(form.dataset.brochure, "_blank", "noopener");
           window.location.href = "/thank-you/?p=" + encodeURIComponent(project) + "&i=" + encodeURIComponent(lead.intent);
         };
@@ -365,13 +371,33 @@
   function initThankYou() {
     if (window.location.pathname.indexOf("/thank-you") !== 0) return;
     var q = new URLSearchParams(window.location.search);
-    window.dataLayer = window.dataLayer || [];
-    window.dataLayer.push({ event: "generate_lead", project: q.get("p"), intent: q.get("i") });
+    track("generate_lead", "Lead", { project: q.get("p"), intent: q.get("i") });
+  }
+
+  /* ---------------- Analytics ---------------- */
+  // Queue-first stubs: events fired before the tag scripts load are kept and sent once they arrive.
+  window.dataLayer = window.dataLayer || [];
+  if (CONFIG.GA4_ID) {
+    window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+    window.gtag("js", new Date());
+    window.gtag("config", CONFIG.GA4_ID);
+  }
+  if (CONFIG.META_PIXEL_ID && !window.fbq) {
+    var fbq = window.fbq = function () { fbq.callMethod ? fbq.callMethod.apply(fbq, arguments) : fbq.queue.push(arguments); };
+    window._fbq = fbq; fbq.push = fbq; fbq.loaded = true; fbq.version = "2.0"; fbq.queue = [];
+    fbq("init", CONFIG.META_PIXEL_ID);
+    fbq("track", "PageView");
+  }
+  // gaEvent goes to GA4 / GTM; pixelEvent to Meta (standard events: Lead; others sent as custom).
+  function track(gaEvent, pixelEvent, params) {
+    window.dataLayer.push(Object.assign({ event: gaEvent }, params));
+    if (CONFIG.GA4_ID && window.gtag) window.gtag("event", gaEvent, params);
+    if (CONFIG.META_PIXEL_ID && window.fbq) window.fbq(pixelEvent === "Lead" ? "track" : "trackCustom", pixelEvent, params);
   }
 
   /* ---------------- Analytics after first interaction ---------------- */
   function initAnalytics() {
-    if (!CONFIG.GTM_ID && !CONFIG.CLARITY_ID) return;
+    if (!CONFIG.GTM_ID && !CONFIG.GA4_ID && !CONFIG.META_PIXEL_ID && !CONFIG.CLARITY_ID) return;
     var loaded = false;
     function load() {
       if (loaded) return;
@@ -381,15 +407,76 @@
         window.dataLayer.push({ "gtm.start": Date.now(), event: "gtm.js" });
         addScript("https://www.googletagmanager.com/gtm.js?id=" + CONFIG.GTM_ID);
       }
-      if (CONFIG.CLARITY_ID) addScript("https://www.clarity.ms/tag/" + CONFIG.CLARITY_ID);
+      if (CONFIG.GA4_ID) addScript("https://www.googletagmanager.com/gtag/js?id=" + CONFIG.GA4_ID);
+      if (CONFIG.META_PIXEL_ID) addScript("https://connect.facebook.net/en_US/fbevents.js");
+      if (CONFIG.CLARITY_ID) {
+        window.clarity = window.clarity || function () { (window.clarity.q = window.clarity.q || []).push(arguments); };
+        addScript("https://www.clarity.ms/tag/" + CONFIG.CLARITY_ID);
+      }
     }
     function addScript(src) { var s = document.createElement("script"); s.async = true; s.src = src; document.head.appendChild(s); }
     ["scroll", "pointerdown", "keydown", "touchstart"].forEach(function (ev) { window.addEventListener(ev, load, { once: true, passive: true }); });
-    setTimeout(load, 8000);
+    // The thank-you page must record the conversion even if the visitor never touches the page.
+    if (window.location.pathname.indexOf("/thank-you") === 0) load(); else setTimeout(load, 8000);
+  }
+
+  /* ---------------- Scroll-triggered lead popup ---------------- */
+  // Opens once per browser session, after the visitor has scrolled 35% of the page AND spent 15 s on it.
+  // Never on thank-you / site-visit / contact, never over a lead form that is on screen,
+  // and never after the visitor has started filling any form.
+  function initPopup() {
+    var dlg = $("#lead-pop");
+    if (!dlg || typeof dlg.showModal !== "function") return;
+    if (/^\/(thank-you|site-visit|contact)\//.test(window.location.pathname)) return;
+    var KEY = "leadPopSeen";
+    var seen = function () { try { return sessionStorage.getItem(KEY); } catch (e) { return "1"; } };
+    var mark = function () { try { sessionStorage.setItem(KEY, "1"); } catch (e) {} };
+    if (seen()) return;
+
+    // Preselect the project the visitor is reading about.
+    var pageForm = $("form[data-leadform]:not(#lead-pop form)");
+    var proj = pageForm && pageForm.dataset.project;
+    var sel = $('select[aria-label="Project"]', dlg);
+    if (proj && sel) $$("option", sel).forEach(function (o) { o.selected = o.textContent === proj; });
+    var popForm = $("form", dlg);
+    if (proj) popForm.dataset.project = proj;
+    if (pageForm && pageForm.dataset.brochure) popForm.dataset.brochure = pageForm.dataset.brochure;
+
+    // Starting any form on the page cancels the popup for this session.
+    $$("form[data-leadform]").forEach(function (f) {
+      if (!dlg.contains(f)) f.addEventListener("focusin", mark, { once: true });
+    });
+
+    var formOnScreen = function () {
+      return $$("form[data-leadform]").some(function (f) {
+        if (dlg.contains(f)) return false;
+        var r = f.getBoundingClientRect();
+        return r.bottom > 0 && r.top < window.innerHeight;
+      });
+    };
+    var start = Date.now(), timer = null;
+    function check() {
+      if (seen() || dlg.open || document.querySelector("dialog[open]")) return stop();
+      var depth = (window.scrollY + window.innerHeight) / document.documentElement.scrollHeight;
+      if (depth < 0.35 || Date.now() - start < 15000 || formOnScreen()) return;
+      stop(); mark();
+      dlg.showModal();
+      document.body.style.overflow = "hidden";
+      track("lead_popup_open", "LeadPopupOpen", { page: window.location.pathname });
+    }
+    function stop() { window.removeEventListener("scroll", onScroll); clearInterval(timer); }
+    function onScroll() { check(); }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    timer = setInterval(check, 3000);
+
+    function close() { if (dlg.open) dlg.close(); }
+    dlg.addEventListener("close", function () { document.body.style.overflow = ""; });
+    dlg.addEventListener("click", function (e) { if (e.target === dlg || e.target.closest("[data-pop-close]")) close(); });
   }
 
   function init() {
     initLeadForms();
+    initPopup();
     initGalleries();
     initEmbeds();
     initThankYou();

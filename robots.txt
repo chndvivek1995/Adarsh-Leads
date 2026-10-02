@@ -1,6 +1,5 @@
 User-Agent: *
 Allow: /
-Allow: /_next/image
 Disallow: /thank-you/
 Disallow: /search/
 Disallow: /api/
@@ -13,5 +12,4 @@ User-Agent: ClaudeBot
 User-Agent: Google-Extended
 Allow: /
 
-Host: https://adarshprojects.co.in/
-Sitemap: https://adarshprojects.co.in/sitemap.xml
+Sitemap: https://www.adarshprojects.co.in/sitemap.xml

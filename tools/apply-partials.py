@@ -19,6 +19,7 @@ On the first run the markers are added automatically around the existing
 Why stamping instead of loading the header with JavaScript: the menu and
 footer links stay inside the HTML, so search engines always see them.
 """
+import hashlib
 import os
 import re
 import sys
@@ -30,6 +31,17 @@ PARTS = [
     ("STICKY", "partials/sticky-cta.html",
      re.compile(r'<div class="fixed inset-x-0 bottom-0 z-40(?:(?!</div>).)*</div>', re.S)),
 ]
+
+# style.css and site.js are cached for a year (vercel.json), so every page links them
+# with ?v=<content hash>. A changed file gets a new hash and browsers fetch it again.
+ASSETS = ["assets/css/style.css", "assets/js/site.js"]
+
+def asset_versions():
+    out = []
+    for a in ASSETS:
+        h = hashlib.sha1(open(os.path.join(ROOT, a), "rb").read()).hexdigest()[:10]
+        out.append((re.compile(r'/%s(?:\?v=[0-9a-f]+)?"' % re.escape(a)), '/%s?v=%s"' % (a, h)))
+    return out
 
 def html_files():
     for base, dirs, files in os.walk(ROOT):
@@ -47,10 +59,13 @@ def main():
             continue
         parts.append((name, open(full, encoding="utf-8").read().strip(), finder))
 
+    versions = asset_versions()
     changed = 0
     for f in sorted(html_files()):
         src = open(f, encoding="utf-8").read()
         out = src
+        for pat, repl in versions:
+            out = pat.sub(repl, out)
         for name, content, finder in parts:
             block = "<!-- %s:START -->%s<!-- %s:END -->" % (name, content, name)
             marker = re.compile(r"<!-- %s:START -->.*?<!-- %s:END -->" % (name, name), re.S)

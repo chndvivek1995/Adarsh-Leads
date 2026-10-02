@@ -50,3 +50,13 @@ The look follows the Adarsh brand used on adarshwelkinpark.online: brochure blue
 coral `#F4836F`, Playfair Display headings over Inter. The Tailwind theme tokens at the top of
 `assets/css/style.css` carry these colours, and the "Adarsh brand layer" block at the end of the
 same file styles the header, footer, buttons, cards, tables and the mobile bar.
+
+## Checks before every commit
+
+```
+python3 tools/apply-partials.py   # stamps header/footer and the ?v= hash on style.css / site.js
+python3 tools/check-site.py       # canonical, schema, images, sitemap, titles, links, outbound policy
+```
+
+`style.css` and `site.js` are cached for a year (`vercel.json`). If you edit either one and skip
+`apply-partials.py`, returning visitors keep the old file.
