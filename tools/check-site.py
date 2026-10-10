@@ -13,7 +13,7 @@ Exits with status 1 and lists the problems if any check fails. It checks:
   6. every internal link and image path points to a file that exists
   7. no URL on the non-www host anywhere in the pages
   8. outbound links go only to government sites (*.gov.in, *.nic.in, rbi.org.in), and project
-     pages have none at all (WhatsApp chat links are allowed everywhere)
+     pages have none at all (WhatsApp chat links and the SISTER sites are allowed everywhere)
 """
 import html
 import json
@@ -24,6 +24,8 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SITE = "https://www.adarshprojects.co.in"
 GOV = re.compile(r"(\.gov\.in|\.nic\.in|^(www\.)?rbi\.org\.in)$")
+# Owner-approved sister sites (same channel partner) that may be linked from any page, incl. project pages.
+SISTER = {"adarshwelkinpark.online"}
 SKIP_DIRS = {"partials", "tools", "media", "covers", "brand", "brochures", "assets", ".git", "node_modules"}
 problems = []
 
@@ -132,7 +134,7 @@ for rel in sorted(pages()):
     is_project = rel.startswith("projects/") and rel != "projects/index.html"
     for ext in re.findall(r'<a\b[^>]*href="(https?://[^"]+)"', body):
         host = re.match(r"https?://([^/]+)", ext).group(1)
-        if host == "wa.me":
+        if host == "wa.me" or host in SISTER:
             continue
         if is_project or rel == "projects/index.html":
             bad(rel, "outbound link on a project page: %s" % ext)
