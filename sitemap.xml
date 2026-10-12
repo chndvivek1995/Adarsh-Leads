@@ -2,11 +2,11 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 <url>
 <loc>https://www.adarshprojects.co.in/</loc>
-<lastmod>2026-09-17</lastmod>
+<lastmod>2026-10-12</lastmod>
 </url>
 <url>
 <loc>https://www.adarshprojects.co.in/projects/</loc>
-<lastmod>2026-10-02</lastmod>
+<lastmod>2026-10-12</lastmod>
 </url>
 <url>
 <loc>https://www.adarshprojects.co.in/new-launches/</loc>
@@ -18,11 +18,11 @@
 </url>
 <url>
 <loc>https://www.adarshprojects.co.in/apartments-in-bangalore/</loc>
-<lastmod>2026-10-02</lastmod>
+<lastmod>2026-10-12</lastmod>
 </url>
 <url>
 <loc>https://www.adarshprojects.co.in/locations/</loc>
-<lastmod>2026-10-02</lastmod>
+<lastmod>2026-10-12</lastmod>
 </url>
 <url>
 <loc>https://www.adarshprojects.co.in/blog/</loc>
@@ -42,7 +42,7 @@
 </url>
 <url>
 <loc>https://www.adarshprojects.co.in/sitemap/</loc>
-<lastmod>2026-09-17</lastmod>
+<lastmod>2026-10-12</lastmod>
 </url>
 <url>
 <loc>https://www.adarshprojects.co.in/disclaimer/</loc>
@@ -132,6 +132,16 @@
 <image:loc>https://www.adarshprojects.co.in/media/adarsh-rosewood/brochure-adarsh-rosewood-adarsh-rosewood-brochure-p11.webp</image:loc>
 </image:image>
 <lastmod>2026-10-02</lastmod>
+</url>
+<url>
+<loc>https://www.adarshprojects.co.in/projects/adarsh-mayberry/</loc>
+<image:image>
+<image:loc>https://www.adarshprojects.co.in/covers/project-adarsh-mayberry.jpg</image:loc>
+</image:image>
+<image:image>
+<image:loc>https://www.adarshprojects.co.in/media/adarsh-mayberry/mayberry-elevation.webp</image:loc>
+</image:image>
+<lastmod>2026-10-12</lastmod>
 </url>
 <url>
 <loc>https://www.adarshprojects.co.in/projects/adarsh-savana-phase-3/</loc>
@@ -248,7 +258,7 @@
 </url>
 <url>
 <loc>https://www.adarshprojects.co.in/locations/bellandur/</loc>
-<lastmod>2026-10-02</lastmod>
+<lastmod>2026-10-12</lastmod>
 </url>
 <url>
 <loc>https://www.adarshprojects.co.in/locations/panathur/</loc>
