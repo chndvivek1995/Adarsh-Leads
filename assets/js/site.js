@@ -474,7 +474,7 @@
     dlg.addEventListener("click", function (e) { if (e.target === dlg || e.target.closest("[data-pop-close]")) close(); });
   }
 
-  /* ---------------- WhatsApp: say which project and page the enquiry came from ---------------- */
+  /* ---------------- WhatsApp: say which project the enquiry came from ---------------- */
   var PROJECTS = {
     "adarsh-mayberry": "Adarsh Palm Retreat Mayberry",
     "adarsh-parkland": "Adarsh Parkland Phase 2",
@@ -488,7 +488,7 @@
     Object.keys(PROJECTS).forEach(function (k) { if (!topic && path.indexOf(k) !== -1) topic = PROJECTS[k]; });
     var h1 = $("h1");
     if (!topic && path.indexOf("/locations/") === 0 && path.length > 11 && h1) topic = h1.textContent.trim();
-    var text = "Hi, I want details on " + (topic || "an Adarsh project") + ". Page: " + window.location.origin + path;
+    var text = "Hi, I would like details of " + (topic || "an Adarsh project");
     $$('a[href^="https://wa.me/"]').forEach(function (a) {
       a.href = a.href.split("?")[0] + "?text=" + encodeURIComponent(text);
     });
