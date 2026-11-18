@@ -477,6 +477,9 @@
   /* ---------------- WhatsApp: say which project the enquiry came from ---------------- */
   var PROJECTS = {
     "adarsh-mayberry": "Adarsh Palm Retreat Mayberry",
+    "adarsh-greens": "Adarsh Greens Phase 3",
+    "adarsh-crest": "Adarsh Crest Phase 2",
+    "adarsh-stratuss": "Adarsh Stratuss Phase 2",
     "adarsh-parkland": "Adarsh Parkland Phase 2",
     "adarsh-rosewood": "Adarsh Rosewood",
     "adarsh-savana": "Adarsh Savana Phase 3",
